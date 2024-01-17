@@ -6,6 +6,7 @@ using System.Text;
 using System;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 
 namespace Demoshoalbackend.Controllers
 {
@@ -83,8 +84,73 @@ namespace Demoshoalbackend.Controllers
             return Customers.Count + 1;
         }
 
+        private static List<CustomerTransactions> Transactions = new List<CustomerTransactions>
+    {
+        new CustomerTransactions { TransID = 1, CustomerID = 1, TransDate = "2024-01-18", Amount = 100 },
+        new CustomerTransactions { TransID = 2, CustomerID = 1, TransDate = "2024-01-19", Amount = 150 },
+        new CustomerTransactions { TransID = 3, CustomerID = 2, TransDate = "2024-01-20", Amount = 200 },
+        new CustomerTransactions { TransID = 4, CustomerID = 2, TransDate = "2024-02-20", Amount = 500 },
+        new CustomerTransactions { TransID = 5, CustomerID = 2, TransDate = "2024-01-20", Amount = 1000 },
+        new CustomerTransactions { TransID = 6, CustomerID = 3, TransDate = "2024-02-20", Amount = 2500 },
+
+    };
 
 
+        [HttpGet("getCustomerTransactions/{customerId}")]
+        public IActionResult GetCustomerTransactions(int customerId)
+        {
+            var transactions = Transactions.Where(t => t.CustomerID == customerId).ToList();
+
+            if (transactions.Count == 0)
+            {
+                return NotFound("No transactions found for the given customer ID");
+            }
+
+            return Ok(transactions);
+        }
+
+        [HttpPost("createCustomerTransaction")]
+        public IActionResult CreateCustomerTransaction([FromBody] CustomerTransactions transaction)
+        {
+            // Simulate generating the next transaction ID (replace with your logic)
+            transaction.TransID = Transactions.Count + 1;
+
+            Transactions.Add(transaction);
+
+            return Ok(new { Message = "Transaction created successfully", Transaction = transaction });
+        }
+
+        [HttpPut("editCustomerTransaction/{transId}")]
+        public IActionResult EditCustomerTransaction(int transId, [FromBody] CustomerTransactions editedTransaction)
+        {
+            var existingTransaction = Transactions.FirstOrDefault(t => t.TransID == transId);
+
+            if (existingTransaction == null)
+            {
+                return NotFound("Transaction not found");
+            }
+
+            // Update the existing transaction with new values
+            existingTransaction.TransDate = editedTransaction.TransDate;
+            existingTransaction.Amount = editedTransaction.Amount;
+
+            return Ok(new { Message = "Transaction edited successfully", Transaction = existingTransaction });
+        }
+
+        [HttpDelete("deleteCustomerTransaction/{transId}")]
+        public IActionResult DeleteCustomerTransaction(int transId)
+        {
+            var existingTransaction = Transactions.FirstOrDefault(t => t.TransID == transId);
+
+            if (existingTransaction == null)
+            {
+                return NotFound("Transaction not found");
+            }
+
+            Transactions.Remove(existingTransaction);
+
+            return Ok(new { Message = "Transaction deleted successfully", Transaction = existingTransaction });
+        }
 
     }
 
@@ -109,7 +175,7 @@ namespace Demoshoalbackend.Controllers
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
-        public string Mobile { get; set; }
+        public long Mobile { get; set; }
     }
 
     public class CustomerTransactions
@@ -117,7 +183,7 @@ namespace Demoshoalbackend.Controllers
         public int TransID { get; set; }
         public int CustomerID { get; set; }
         public string TransDate { get; set; }
-        public int Amount { get; set; }
+        public long Amount { get; set; }
     }
 
     public class CustomerDescripencies
